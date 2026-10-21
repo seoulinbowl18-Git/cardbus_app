@@ -29,7 +29,7 @@ class TicketScreen extends StatelessWidget {
                 Text('PO ${o.poName}', style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.w800, fontSize: 18)),
                 Text(o.busClass, style: const TextStyle(color: Color(0xFFCFE9E6))),
                 const SizedBox(height: 6),
-                Text(o.status == 'Aktif' ? 'LUNAS · AKTIF' : o.status.toUpperCase(),
+                Text(o.isActive ? 'LUNAS · AKTIF' : o.status.label.toUpperCase(),
                     style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w800, fontSize: 12)),
               ]),
             ),

@@ -21,10 +21,12 @@ class OrdersProvider extends ChangeNotifier {
 
   final List<BookingOrder> _orders = [];
   List<BookingOrder> get orders => List.unmodifiable(_orders);
-  int get activeCount => _orders.where((o) => o.status == 'Aktif').length;
+  /// Hanya tiket berstatus aktif: belum di-scan dan jadwal belum lewat.
+  int get activeCount => _orders.where((o) => o.isActive).length;
 
   /// Total nilai tiket yang dibayar (tiket dibatalkan tidak dihitung).
-  int get totalSpent => _orders.where((o) => o.status != 'Dibatalkan').fold(0, (sum, o) => sum + o.total);
+  int get totalSpent =>
+      _orders.where((o) => o.status != TicketStatus.cancelled).fold(0, (sum, o) => sum + o.total);
 
   bool loading = false;
   String? error; // pesan gagal fetch terakhir (null jika berhasil)
@@ -69,8 +71,9 @@ class OrdersProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// JSON pesanan dari backend → [BookingOrder]. Nama PO, kelas & jam tidak ada di
-  /// respons pesanan, jadi dilengkapi dari GET /api/trips (satu kali per rute + tanggal).
+  /// JSON pesanan dari backend → [BookingOrder]. Status tiket, nama PO, kelas & jam berangkat
+  /// datang dari respons pesanan; nama varian kursi & jam tiba dilengkapi dari GET /api/trips
+  /// (satu kali per rute + tanggal). Backend lama tanpa field tersebut tetap didukung.
   Future<List<BookingOrder>> _toOrders(List<Map<String, dynamic>> list) async {
     final tripInfo = <String, Map<String, dynamic>>{};
     final searches = {
@@ -100,21 +103,21 @@ class OrdersProvider extends ChangeNotifier {
               tripInfo['${j['trip']}|${j['from']}|${j['to']}|${j['date']}'];
           final tiers = (t?['tiers'] as List? ?? const []).cast<Map>();
           final tier = tiers.where((x) => x['key'] == j['tierKey']).firstOrNull;
-          final busClass = t?['busClass'] as String? ?? '';
+          final busClass = j['busClass'] as String? ?? t?['busClass'] as String? ?? '';
           final tierName =
               tier?['name'] as String? ?? (j['tierKey'] as String? ?? '');
           final payment =
               Map<String, dynamic>.from(j['payment'] as Map? ?? const {});
           return BookingOrder(
             code: j['code'] as String,
-            poName: t?['poName'] as String? ?? '-',
+            poName: j['poName'] as String? ?? t?['poName'] as String? ?? '-',
             busClass:
                 [busClass, tierName].where((s) => s.isNotEmpty).join(' · '),
             from: j['from'] as String? ?? '',
             to: j['to'] as String? ?? '',
             date:
                 DateTime.tryParse(j['date'] as String? ?? '') ?? DateTime.now(),
-            depart: t?['depart'] as String? ?? '-',
+            depart: j['depart'] as String? ?? t?['depart'] as String? ?? '-',
             arrive: t?['arrive'] as String? ?? '-',
             boardPoint: j['boardPoint'] as String? ?? '',
             dropPoint: j['dropPoint'] as String? ?? '',
@@ -123,7 +126,9 @@ class OrdersProvider extends ChangeNotifier {
                 (j['passengers'] as List? ?? const []).cast<String>(),
             total: (j['total'] as num? ?? 0).toInt(),
             paymentMethod: _methodLabel(payment['method'] as String?),
-            status: j['status'] == 'paid' ? 'Aktif' : 'Dibatalkan',
+            status: TicketStatus.fromApi(j['ticketStatus'] as String?) ??
+                (j['status'] == 'paid' ? TicketStatus.active : TicketStatus.cancelled),
+            validUntil: DateTime.tryParse(j['validUntil'] as String? ?? '')?.toLocal(),
           );
         }(),
     ];
@@ -145,7 +150,7 @@ class OrdersProvider extends ChangeNotifier {
   void cancel(String code) {
     final i = _orders.indexWhere((o) => o.code == code);
     if (i < 0) return;
-    _orders[i] = _orders[i].copyWith(status: 'Dibatalkan');
+    _orders[i] = _orders[i].copyWith(status: TicketStatus.cancelled);
     notifyListeners();
   }
 
