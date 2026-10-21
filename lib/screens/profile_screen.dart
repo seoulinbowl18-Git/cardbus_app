@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../models/saved_passenger.dart';
 import '../providers/auth_provider.dart';
+import '../providers/orders_provider.dart';
 import '../services/api_service.dart';
 import '../theme/app_colors.dart';
+import '../utils/formatters.dart';
 import '../widgets/avatar_widget.dart';
 import 'login_screen.dart';
 import 'refund_history_screen.dart';
@@ -120,6 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final orders = context.watch<OrdersProvider>(); // tiket milik akun yang sedang login
     final displayName = (auth.name?.trim().isNotEmpty ?? false) ? auth.name!.trim() : 'Pengguna CardBus';
     final displayPhone = (auth.isLoggedIn && auth.phone.isNotEmpty) ? auth.phone : 'Belum ditautkan';
 
@@ -223,11 +226,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildStatItem('0', 'Pesanan'),
+                        _buildStatItem('${orders.orders.length}', 'Pesanan'),
                         Container(height: 25, width: 1, color: Colors.grey.shade300),
-                        _buildStatItem('0', 'Tiket aktif'),
+                        _buildStatItem('${orders.activeCount}', 'Tiket aktif'),
                         Container(height: 25, width: 1, color: Colors.grey.shade300),
-                        _buildStatItem('Rp 0', 'Total transaksi'),
+                        _buildStatItem(rupiah(orders.totalSpent), 'Total transaksi'),
                       ],
                     ),
                   ),

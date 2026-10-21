@@ -23,6 +23,9 @@ class OrdersProvider extends ChangeNotifier {
   List<BookingOrder> get orders => List.unmodifiable(_orders);
   int get activeCount => _orders.where((o) => o.status == 'Aktif').length;
 
+  /// Total nilai tiket yang dibayar (tiket dibatalkan tidak dihitung).
+  int get totalSpent => _orders.where((o) => o.status != 'Dibatalkan').fold(0, (sum, o) => sum + o.total);
+
   bool loading = false;
   String? error; // pesan gagal fetch terakhir (null jika berhasil)
 
