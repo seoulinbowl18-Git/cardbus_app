@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is off -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <!-- Splash native hijau CardBus; dilepas otomatis saat Flutter menggambar frame pertama -->
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:statusBarColor">@color/cardbus_green</item>
+        <item name="android:navigationBarColor">@color/cardbus_green</item>
+    </style>
+    <!-- Theme applied to the Android Window as soon as the process has started.
+         Dibuat hijau juga agar jeda sebelum frame Flutter pertama tidak tampil putih. -->
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/cardbus_green</item>
+    </style>
+</resources>

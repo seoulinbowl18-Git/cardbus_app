@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sama dengan AppColors.teal (warna utama tema) -->
+    <color name="cardbus_green">#087F78</color>
+</resources>

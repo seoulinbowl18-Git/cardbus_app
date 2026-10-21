@@ -1,0 +1,30 @@
+name: cardbus
+description: CardBus - Tiket Bus, Lebih Mudah.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.2          # state management
+  google_fonts: ^6.2.1      # font Plus Jakarta Sans
+  intl: ^0.19.0             # format Rupiah & tanggal Indonesia
+  http: ^1.2.2              # panggil API backend
+  shared_preferences: ^2.3.2 # simpan sesi & foto profil
+  image_picker: ^1.1.2      # ganti foto profil dari galeri
+  qr_flutter: ^4.1.0        # QR di e-tiket
+  url_launcher: ^6.3.3      # buka WhatsApp CS
+  flutter_secure_storage: ^11.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
