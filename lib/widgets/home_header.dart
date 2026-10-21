@@ -45,7 +45,7 @@ class HomeHeader extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           'Halo, $userName! Mau ke mana?',
-          style: const TextStyle(color: AppColors.white, fontSize: 25, fontWeight: FontWeight.w800, height: 1.2),
+          style: const TextStyle(color: AppColors.white, fontSize: 20, fontWeight: FontWeight.w700, height: 1.25),
         ),
       ]),
     );
