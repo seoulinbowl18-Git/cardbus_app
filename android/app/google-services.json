@@ -12,7 +12,20 @@
           "package_name": "com.cardbus_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "659374502720-dnti86k8lkddlhd0u2sjdm48uvmvsdp8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cardbus_app",
+            "certificate_hash": "c4121d689ff93017f264d3a0d5f97f29024510c5"
+          }
+        },
+        {
+          "client_id": "659374502720-3us13oqtn3p3ti6vtl4u950cdmg30vkd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCNl9wkoJBUKjD6PDUaYY_BQ3pC1coOpNY"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "659374502720-3us13oqtn3p3ti6vtl4u950cdmg30vkd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
