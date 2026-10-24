@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "659374502720",
+    "project_id": "cardbus-d6aa5",
+    "storage_bucket": "cardbus-d6aa5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:659374502720:android:11433ecf3140b3d07640a5",
+        "android_client_info": {
+          "package_name": "com.cardbus_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNl9wkoJBUKjD6PDUaYY_BQ3pC1coOpNY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

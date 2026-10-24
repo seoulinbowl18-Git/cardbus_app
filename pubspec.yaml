@@ -18,6 +18,9 @@ dependencies:
   qr_flutter: ^4.1.0        # QR di e-tiket
   url_launcher: ^6.3.3      # buka WhatsApp CS
   flutter_secure_storage: ^11.2.0
+  firebase_core: ^5.1.0     # inisialisasi Firebase
+  firebase_auth: ^7.0.1     # login Google via Firebase Auth
+  google_sign_in: ^7.2.0    # pilih akun Google di HP
 
 dev_dependencies:
   flutter_test:

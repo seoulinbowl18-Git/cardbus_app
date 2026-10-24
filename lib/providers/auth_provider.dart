@@ -2,15 +2,18 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/saved_passenger.dart';
 import '../services/api_service.dart';
 
-/// Login (nomor WhatsApp + OTP Fonnte) + profil (nama, foto, penumpang tersimpan).
+/// Login (nomor WhatsApp + OTP Fonnte, atau akun Google) + profil (nama, foto, penumpang tersimpan).
 ///
 /// Satu-satunya yang disimpan di perangkat adalah JWT, di [FlutterSecureStorage].
 /// Data profil TIDAK pernah di-cache ke disk: hanya ada di memori dan selalu diambil
@@ -135,12 +138,52 @@ class AuthProvider extends ChangeNotifier {
   /// Melempar [ApiException] jika kode salah / kedaluwarsa.
   Future<void> verifyOtp(String phone, String code) async {
     final data = await _api.post('/api/auth/verify-otp', {'phone': phone, 'code': code});
+    await _startSession(data, 'verify-otp');
+  }
+
+  /// Login Google: pilih akun → Firebase Auth → tukar Firebase ID token dengan JWT backend
+  /// (`POST /api/auth/google`). `false` jika user menutup pemilih akun.
+  /// Melempar [ApiException] jika gagal.
+  Future<bool> signInWithGoogle() async {
+    if (kIsWeb) throw ApiException(400, 'Masuk dengan Google belum tersedia di versi web');
+    final String idToken;
+    try {
+      await (_googleInit ??= GoogleSignIn.instance.initialize(serverClientId: _googleServerClientId.isEmpty ? null : _googleServerClientId));
+      final account = await GoogleSignIn.instance.authenticate();
+      final googleIdToken = account.authentication.idToken;
+      if (googleIdToken == null) throw ApiException(500, 'Google tidak mengirim ID token');
+      final cred = await FirebaseAuth.instance.signInWithCredential(GoogleAuthProvider.credential(idToken: googleIdToken));
+      final firebaseToken = await cred.user?.getIdToken();
+      if (firebaseToken == null) throw ApiException(500, 'Firebase tidak mengirim ID token');
+      idToken = firebaseToken;
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return false;
+      debugPrint('[Auth] Google Sign-In gagal: ${e.code} ${e.description}');
+      throw ApiException(400, 'Gagal masuk dengan Google (${e.code.name})');
+    } on FirebaseAuthException catch (e) {
+      debugPrint('[Auth] Firebase Auth gagal: ${e.code} ${e.message}');
+      throw ApiException(400, 'Gagal masuk dengan Google (${e.code})');
+    }
+
+    final data = await _api.post('/api/auth/google', {'idToken': idToken});
+    await _startSession(data, 'google');
+    return true;
+  }
+
+  Future<void>? _googleInit;
+
+  /// Web client ID Firebase. Kosong → dibaca otomatis dari google-services.json
+  /// (`default_web_client_id`); isi lewat --dart-define=GOOGLE_SERVER_CLIENT_ID=… jika perlu.
+  static const _googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+
+  /// Simpan JWT (SecureStorage) + data user (memori) dari respons login backend.
+  Future<void> _startSession(Object? data, String endpoint) async {
     // Validasi respons dulu; sesi baru disimpan jika token + user lengkap,
     // agar verifikasi yang gagal tidak meninggalkan status "sudah login".
     final newToken = data is Map ? data['token'] : null;
     final user = data is Map ? data['user'] : null;
     if (newToken is! String || newToken.isEmpty || user is! Map) {
-      throw ApiException(500, 'Respons verify-otp tidak berisi token/user: ${ApiService.describe(data)}');
+      throw ApiException(500, 'Respons $endpoint tidak berisi token/user: ${ApiService.describe(data)}');
     }
     await _storage.write(key: _kToken, value: newToken);
     // Bersihkan sisa akun sebelumnya di memori sebelum memasang akun baru.
@@ -214,6 +257,16 @@ class AuthProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     for (final k in _legacyPrefKeys) {
       await prefs.remove(k);
+    }
+
+    // Keluar juga dari Google/Firebase agar login berikutnya bisa memilih akun lain.
+    if (!kIsWeb && Firebase.apps.isNotEmpty) {
+      try {
+        await FirebaseAuth.instance.signOut();
+        if (_googleInit != null) await GoogleSignIn.instance.signOut();
+      } catch (e) {
+        debugPrint('[Auth] gagal keluar dari Google: $e');
+      }
     }
   }
 

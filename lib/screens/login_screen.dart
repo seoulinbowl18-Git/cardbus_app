@@ -9,7 +9,7 @@ import '../widgets/cardbus_logo.dart';
 import 'main_shell.dart';
 import 'otp_verification_screen.dart';
 
-/// Masuk / daftar dengan nomor WhatsApp + OTP.
+/// Masuk / daftar dengan nomor WhatsApp + OTP, atau dengan akun Google.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -21,6 +21,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _form = GlobalKey<FormState>();
   final _phone = TextEditingController();
   bool _busy = false;
+  bool _googleBusy = false;
+
+  bool get _anyBusy => _busy || _googleBusy;
 
   static final _phonePattern = RegExp(r'^(\+?62|0)?8\d{7,11}$');
 
@@ -53,14 +56,34 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    FocusScope.of(context).unfocus();
+    setState(() => _googleBusy = true);
+    try {
+      final signedIn = await context.read<AuthProvider>().signInWithGoogle();
+      if (!mounted) return;
+      if (!signedIn) {
+        setState(() => _googleBusy = false); // pemilih akun ditutup
+        return;
+      }
+      // Token sudah tersimpan → bersihkan seluruh riwayat dan mulai dari Beranda.
+      _goHome();
+    } on ApiException catch (e) {
+      _fail(e.message);
+    } catch (e, st) {
+      debugPrint('[Login] masuk Google gagal: ${e.runtimeType}: $e\n$st');
+      _fail('Gagal masuk dengan Google: $e');
+    }
+  }
+
   void _fail(String message) {
     if (!mounted) return;
-    setState(() => _busy = false);
+    setState(() => _busy = _googleBusy = false);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  /// Masuk ke Beranda sebagai tamu, dengan riwayat halaman dibersihkan.
-  void _goHomeAsGuest() {
+  /// Masuk ke Beranda (sebagai tamu atau setelah login), dengan riwayat halaman dibersihkan.
+  void _goHome() {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const MainShell()),
       (route) => false,
@@ -74,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return PopScope(
       canPop: Navigator.of(context).canPop(),
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _goHomeAsGuest();
+        if (!didPop) _goHome();
       },
       child: _buildBody(context),
     );
@@ -100,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                           Row(children: [
                             IconButton(
-                              onPressed: _goHomeAsGuest,
+                              onPressed: _goHome,
                               icon: const Icon(Icons.arrow_back_rounded, color: AppColors.white),
                             ),
                             const CardBusIcon(size: 48),
@@ -133,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _phone,
-                            enabled: !_busy,
+                            enabled: !_anyBusy,
                             keyboardType: TextInputType.phone,
                             textInputAction: TextInputAction.done,
                             inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s\-]')), LengthLimitingTextInputFormatter(17)],
@@ -143,14 +166,41 @@ class _LoginScreenState extends State<LoginScreen> {
                               prefixIcon: Icon(Icons.phone_android_rounded),
                             ),
                             validator: (_) => _phonePattern.hasMatch(_cleanPhone) ? null : 'Nomor WhatsApp tidak valid (contoh: 081234567890)',
-                            onFieldSubmitted: (_) => _busy ? null : _sendOtp(),
+                            onFieldSubmitted: (_) => _anyBusy ? null : _sendOtp(),
                           ),
                           const SizedBox(height: 14),
                           ElevatedButton(
-                            onPressed: _busy ? null : _sendOtp,
+                            onPressed: _anyBusy ? null : _sendOtp,
                             child: _busy
                                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.white))
                                 : const Text('Kirim kode OTP'),
+                          ),
+                          const SizedBox(height: 18),
+                          const Row(children: [
+                            Expanded(child: Divider(color: AppColors.border)),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12),
+                              child: Text('atau', style: TextStyle(color: AppColors.faint, fontWeight: FontWeight.w600)),
+                            ),
+                            Expanded(child: Divider(color: AppColors.border)),
+                          ]),
+                          const SizedBox(height: 18),
+                          OutlinedButton(
+                            onPressed: _anyBusy ? null : _signInWithGoogle,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.ink,
+                              minimumSize: const Size(64, 50),
+                              side: const BorderSide(color: AppColors.border, width: 1.4),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                            ),
+                            child: _googleBusy
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.teal))
+                                : const Row(mainAxisSize: MainAxisSize.min, children: [
+                                    Text('G', style: TextStyle(color: Color(0xFF4285F4), fontSize: 20, fontWeight: FontWeight.w900)),
+                                    SizedBox(width: 10),
+                                    Text('Masuk dengan Google'),
+                                  ]),
                           ),
                         ]),
                       ),
