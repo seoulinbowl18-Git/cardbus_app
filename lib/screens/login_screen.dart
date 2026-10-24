@@ -86,69 +86,80 @@ class _LoginScreenState extends State<LoginScreen> {
         decoration: const BoxDecoration(gradient: AppColors.headerGradient),
         child: SafeArea(
           bottom: false,
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Row(children: [
-                    IconButton(
-                      onPressed: _goHomeAsGuest,
-                      icon: const Icon(Icons.arrow_back_rounded, color: AppColors.white),
+          // Scroll agar tidak overflow saat keyboard muncul / layar pendek; minHeight +
+          // IntrinsicHeight menjaga Expanded tetap mengisi layar saat konten muat.
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                          Row(children: [
+                            IconButton(
+                              onPressed: _goHomeAsGuest,
+                              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.white),
+                            ),
+                            const CardBusIcon(size: 48),
+                            const SizedBox(width: 12),
+                            const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              CardBusWordmark(fontSize: 26),
+                              Text('Tiket Bus, Lebih Mudah', style: TextStyle(color: Color(0xFFCFE9E6), fontWeight: FontWeight.w600)),
+                            ]),
+                          ]),
+                          const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text('Pesan tiket bus, tanpa antre.',
+                                style: TextStyle(color: AppColors.white, fontSize: 30, fontWeight: FontWeight.w800, height: 1.15)),
+                            SizedBox(height: 10),
+                            Text('Bandingkan jadwal PO mitra, pilih kursi, dan simpan e-tiket di satu aplikasi.',
+                                style: TextStyle(color: Color(0xFFCFE9E6), height: 1.5)),
+                          ]),
+                        ]),
+                      ),
                     ),
-                    const CardBusIcon(size: 48),
-                    const SizedBox(width: 12),
-                    const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      CardBusWordmark(fontSize: 26),
-                      Text('Tiket Bus, Lebih Mudah', style: TextStyle(color: Color(0xFFCFE9E6), fontWeight: FontWeight.w600)),
-                    ]),
+                    Container(
+                      padding: EdgeInsets.fromLTRB(20, 26, 20, 26 + MediaQuery.viewInsetsOf(context).bottom + MediaQuery.paddingOf(context).bottom),
+                      decoration: const BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+                      child: Form(
+                        key: _form,
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                          const Text('Masuk atau daftar', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 6),
+                          const Text('Masukkan nomor WhatsApp. Kami kirim kode OTP ke WhatsApp kamu — akun baru dibuat otomatis.',
+                              style: TextStyle(color: AppColors.muted, height: 1.5)),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _phone,
+                            enabled: !_busy,
+                            keyboardType: TextInputType.phone,
+                            textInputAction: TextInputAction.done,
+                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s\-]')), LengthLimitingTextInputFormatter(17)],
+                            decoration: const InputDecoration(
+                              labelText: 'Nomor WhatsApp',
+                              hintText: '08xxxxxxxxxx',
+                              prefixIcon: Icon(Icons.phone_android_rounded),
+                            ),
+                            validator: (_) => _phonePattern.hasMatch(_cleanPhone) ? null : 'Nomor WhatsApp tidak valid (contoh: 081234567890)',
+                            onFieldSubmitted: (_) => _busy ? null : _sendOtp(),
+                          ),
+                          const SizedBox(height: 14),
+                          ElevatedButton(
+                            onPressed: _busy ? null : _sendOtp,
+                            child: _busy
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.white))
+                                : const Text('Kirim kode OTP'),
+                          ),
+                        ]),
+                      ),
+                    ),
                   ]),
-                  const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Pesan tiket bus, tanpa antre.',
-                        style: TextStyle(color: AppColors.white, fontSize: 30, fontWeight: FontWeight.w800, height: 1.15)),
-                    SizedBox(height: 10),
-                    Text('Bandingkan jadwal PO mitra, pilih kursi, dan simpan e-tiket di satu aplikasi.',
-                        style: TextStyle(color: Color(0xFFCFE9E6), height: 1.5)),
-                  ]),
-                ]),
+                ),
               ),
             ),
-            Container(
-              padding: EdgeInsets.fromLTRB(20, 26, 20, 26 + MediaQuery.viewInsetsOf(context).bottom + MediaQuery.paddingOf(context).bottom),
-              decoration: const BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-              child: Form(
-                key: _form,
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  const Text('Masuk atau daftar', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 6),
-                  const Text('Masukkan nomor WhatsApp. Kami kirim kode OTP ke WhatsApp kamu — akun baru dibuat otomatis.',
-                      style: TextStyle(color: AppColors.muted, height: 1.5)),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _phone,
-                    enabled: !_busy,
-                    keyboardType: TextInputType.phone,
-                    textInputAction: TextInputAction.done,
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s\-]')), LengthLimitingTextInputFormatter(17)],
-                    decoration: const InputDecoration(
-                      labelText: 'Nomor WhatsApp',
-                      hintText: '08xxxxxxxxxx',
-                      prefixIcon: Icon(Icons.phone_android_rounded),
-                    ),
-                    validator: (_) => _phonePattern.hasMatch(_cleanPhone) ? null : 'Nomor WhatsApp tidak valid (contoh: 081234567890)',
-                    onFieldSubmitted: (_) => _busy ? null : _sendOtp(),
-                  ),
-                  const SizedBox(height: 14),
-                  ElevatedButton(
-                    onPressed: _busy ? null : _sendOtp,
-                    child: _busy
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.white))
-                        : const Text('Kirim kode OTP'),
-                  ),
-                ]),
-              ),
-            ),
-          ]),
+          ),
         ),
       ),
     );
