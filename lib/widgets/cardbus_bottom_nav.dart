@@ -16,7 +16,7 @@ class CardBusBottomNav extends StatelessWidget {
       (Icons.home_rounded, 'Beranda'),
       (Icons.confirmation_number_outlined, ticketBadge > 0 ? 'Tiket Saya ($ticketBadge)' : 'Tiket Saya'),
       (Icons.card_giftcard_rounded, 'Promo'),
-      (Icons.menu_rounded, 'Akun'),
+      (Icons.person_rounded, 'Akun'),
     ];
     return Container(
       decoration: const BoxDecoration(color: AppColors.white, border: Border(top: BorderSide(color: AppColors.border))),
