@@ -9,7 +9,7 @@ import 'orders_screen.dart';
 import 'profile_screen.dart';
 import 'promo_screen.dart';
 
-/// Kerangka 4 tab: Beranda · Tiket Saya · Promo · Lainnya.
+/// Kerangka 4 tab: Beranda · Tiket Saya · Promo · Akun.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
