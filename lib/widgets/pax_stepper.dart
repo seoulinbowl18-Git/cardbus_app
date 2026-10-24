@@ -50,16 +50,14 @@ class PaxStepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 6, 8, 6),
+      padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
       decoration: BoxDecoration(border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(14)),
       child: Row(children: [
         const Icon(Icons.person_rounded, color: AppColors.teal),
         const SizedBox(width: 12),
         Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Jumlah penumpang · maks. $max', style: const TextStyle(fontSize: 11, color: AppColors.faint, fontWeight: FontWeight.w600)),
-            Text('$value Penumpang', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-          ]),
+          child: Text('$value Penumpang',
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
         ),
         StepButton(symbol: '−', onTap: onMinus, semanticLabel: 'Kurangi penumpang'),
         const SizedBox(width: 8),
